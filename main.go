@@ -153,6 +153,7 @@ func poll() {
 	}
 }
 func init() {
+	log.Println("initializing bot")
 	channelName = os.Getenv("TG_CHANNEL_NAME")
 	_bot, err := tgbotapi.NewBotAPI(os.Getenv("TG_BOT_TOKEN"))
 	if err != nil {
@@ -161,13 +162,17 @@ func init() {
 
 	bot = _bot
 
+	log.Println("bot initialized successfully. initial polling...")
 	poll()
+
+	log.Println("poll successful!")
 }
 
 func close() {
 }
 
 func main() {
+
 	ticker := time.NewTicker(30 * time.Minute)
 	sigs := make(chan os.Signal)
 
@@ -181,16 +186,19 @@ func main() {
 			case <-sigs:
 				break loop
 			case <-ticker.C:
+				log.Println("polling...")
 				poll()
 			}
 		}
 
 		close()
-		fmt.Println("Goodbye.")
+		log.Println("Goodbye.")
 		wg.Done()
 	}()
 
 	defer ticker.Stop()
+
+	log.Println("poll loop starting. polling every 30 minutes...")
 	wg.Add(1)
 	wg.Wait()
 }
