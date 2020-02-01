@@ -6,6 +6,7 @@ import (
 	"fmt"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"os"
 	"os/signal"
@@ -20,14 +21,34 @@ var (
 	bot                   *tgbotapi.BotAPI
 )
 
+func open(handler func(f *os.File, err error) ([]byte, error)) ([]byte, error) {
+	return handler(os.Open("latest.csv"))
+}
+
 func poll() {
-	resp, err := http.Get("https://docs.google.com/spreadsheets/d/1yZv9w9zRKwrGTaR-YzmAqMefw4wMlaXocejdxZaTs6w/export?format=csv")
+	d, err := open(func(f *os.File, err error) ([]byte, error) {
+		pullFromWeb := false
+		var fileBytes []byte
+		if os.IsNotExist(err) {
+			pullFromWeb = true
+		} else if fileBytes, err = ioutil.ReadAll(f); err == nil {
+			lastHash = fmt.Sprintf("%02x", sha256.Sum256(fileBytes))
+		}
 
-	if err != nil {
-		panic(err)
-	}
+		resp, err := http.Get("https://docs.google.com/spreadsheets/d/1yZv9w9zRKwrGTaR-YzmAqMefw4wMlaXocejdxZaTs6w/export?format=csv")
+		if err != nil {
+			panic(err)
+		}
 
-	d, err := ioutil.ReadAll(resp.Body)
+		b, _ := ioutil.ReadAll(resp.Body)
+		newHash := fmt.Sprintf("%02x", sha256.Sum256(b))
+
+		if newHash != lastHash || pullFromWeb {
+			return b, nil
+		} else {
+			return fileBytes, nil
+		}
+	})
 
 	if err != nil {
 		panic(err)
@@ -36,6 +57,12 @@ func poll() {
 	newHash := fmt.Sprintf("%02x", sha256.Sum256(d))
 
 	if newHash != lastHash {
+		log.Printf("New update (hash: %s)", newHash)
+		// save the latest version
+		if err := ioutil.WriteFile("latest.csv", d, os.ModePerm); err != nil {
+			panic(err)
+		}
+
 		newRecords := ReadRecords(bytes.NewReader(d))
 		lastHash = newHash
 		totalDeaths, totalCases, totalRecover := 0, 0, 0
@@ -103,6 +130,7 @@ func poll() {
 					}
 				}
 			}
+
 		}
 
 		if bot != nil {
@@ -110,8 +138,8 @@ func poll() {
 				BaseChat: tgbotapi.BaseChat{
 					ChannelUsername: fmt.Sprintf("@%s", channelName),
 				},
-				Text: fmt.Sprintf("❗*Coronavirus Updates*❗\n\n*Total Cases: %d \\(\\+%d\\)*\n*Total Deaths: %d \\(\\+%d\\)*\n*Total Recovered: %d \\(\\+%d\\)*\n",
-					totalCases, totalCasesDiff, totalDeaths, totalDeathDiff, totalRecover, totalRecoveredDiff),
+				Text: fmt.Sprintf("❗*Coronavirus Updates*❗\n\n*Total Cases: %d \\(\\+%d\\)*\n*Total Deaths: %d \\(\\+%d\\)*\n*Total Recovered: %d \\(\\+%d\\)*\n*Last Updated: %s*",
+					totalCases, totalCasesDiff, totalDeaths, totalDeathDiff, totalRecover, totalRecoveredDiff, newRecords[0].LastUpdated.Format("Jan 2, 2006 @ 15:04")),
 				ParseMode: "markdownv2",
 			}
 
@@ -124,7 +152,6 @@ func poll() {
 		recentRecords = newRecords
 	}
 }
-
 func init() {
 	channelName = os.Getenv("TG_CHANNEL_NAME")
 	_bot, err := tgbotapi.NewBotAPI(os.Getenv("TG_BOT_TOKEN"))
@@ -135,6 +162,9 @@ func init() {
 	bot = _bot
 
 	poll()
+}
+
+func close() {
 }
 
 func main() {
@@ -155,6 +185,7 @@ func main() {
 			}
 		}
 
+		close()
 		fmt.Println("Goodbye.")
 		wg.Done()
 	}()
