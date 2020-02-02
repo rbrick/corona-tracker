@@ -173,7 +173,7 @@ func close() {
 
 func main() {
 
-	ticker := time.NewTicker(30 * time.Minute)
+	ticker := time.NewTicker(15 * time.Minute)
 	sigs := make(chan os.Signal)
 
 	signal.Notify(sigs, syscall.SIGTERM, syscall.SIGINT, syscall.SIGKILL)
@@ -198,7 +198,7 @@ func main() {
 
 	defer ticker.Stop()
 
-	log.Println("poll loop starting. polling every 30 minutes...")
+	log.Println("poll loop starting. polling every 15 minutes...")
 	wg.Add(1)
 	wg.Wait()
 }
