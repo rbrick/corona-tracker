@@ -154,13 +154,13 @@ func poll() {
 }
 func init() {
 	log.Println("initializing bot")
-	//channelName = os.Getenv("TG_CHANNEL_NAME")
-	//_bot, err := tgbotapi.NewBotAPI(os.Getenv("TG_BOT_TOKEN"))
-	//if err != nil {
-	//	panic(err)
-	//}
-	//
-	//bot = _bot
+	channelName = os.Getenv("TG_CHANNEL_NAME")
+	_bot, err := tgbotapi.NewBotAPI(os.Getenv("TG_BOT_TOKEN"))
+	if err != nil {
+		panic(err)
+	}
+
+	bot = _bot
 
 	log.Println("bot initialized successfully. initial polling...")
 	poll()
