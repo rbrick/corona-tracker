@@ -32,7 +32,9 @@ func poll() {
 		if os.IsNotExist(err) {
 			pullFromWeb = true
 		} else if fileBytes, err = ioutil.ReadAll(f); err == nil {
-			lastHash = fmt.Sprintf("%02x", sha256.Sum256(fileBytes))
+			if lastHash == "" {
+				lastHash = fmt.Sprintf("%02x", sha256.Sum256(fileBytes))
+			}
 		}
 
 		resp, err := http.Get("https://docs.google.com/spreadsheets/d/1yZv9w9zRKwrGTaR-YzmAqMefw4wMlaXocejdxZaTs6w/export?format=csv")
@@ -77,9 +79,7 @@ func poll() {
 		if len(recentRecords) != 0 {
 			diffs := DiffRecords(recentRecords, newRecords)
 
-			diffCount := 0
 			for idx, diff := range diffs {
-				diffCount++
 				diffReport := ""
 				if diff.Added {
 					diffReport += "⚠ *New Outbreak* ⚠\n"
@@ -126,7 +126,7 @@ func poll() {
 					}
 
 					if _, err := bot.Send(msg); err != nil {
-						recover()
+						log.Panicln(err)
 					}
 				}
 			}
@@ -142,25 +142,25 @@ func poll() {
 					totalCases, totalCasesDiff, totalDeaths, totalDeathDiff, totalRecover, totalRecoveredDiff, newRecords[0].LastUpdated.Format("Jan 2, 2006 @ 15:04")),
 				ParseMode: "markdownv2",
 			}
-
 			if _, err := bot.Send(msg); err != nil {
-				recover()
-				panic(err)
+				log.Panicln(err)
 			}
 		}
 
+		fmt.Printf("❗*Coronavirus Updates*❗\n\n*Total Cases: %d \\(\\+%d\\)*\n*Total Deaths: %d \\(\\+%d\\)*\n*Total Recovered: %d \\(\\+%d\\)*\n*Last Updated: %s*",
+			totalCases, totalCasesDiff, totalDeaths, totalDeathDiff, totalRecover, totalRecoveredDiff, newRecords[0].LastUpdated.Format("Jan 2, 2006 @ 15:04"))
 		recentRecords = newRecords
 	}
 }
 func init() {
 	log.Println("initializing bot")
-	channelName = os.Getenv("TG_CHANNEL_NAME")
-	_bot, err := tgbotapi.NewBotAPI(os.Getenv("TG_BOT_TOKEN"))
-	if err != nil {
-		panic(err)
-	}
-
-	bot = _bot
+	//channelName = os.Getenv("TG_CHANNEL_NAME")
+	//_bot, err := tgbotapi.NewBotAPI(os.Getenv("TG_BOT_TOKEN"))
+	//if err != nil {
+	//	panic(err)
+	//}
+	//
+	//bot = _bot
 
 	log.Println("bot initialized successfully. initial polling...")
 	poll()
