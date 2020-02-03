@@ -69,7 +69,11 @@ func DiffRecords(oldRecords, newRecords []*Record) []*RecordDiff {
 func ParseRow(row []string) *Record {
 	province := row[0]
 	country := row[1]
-	lastUpdate, _ := time.Parse("1/2/2006 15:04", row[2])
+	lastUpdate, err := time.Parse("1/2/2006 15:04", row[2])
+
+	if err != nil {
+		lastUpdate = time.Now()
+	}
 
 	cases := 0
 	if row[3] != "" {
