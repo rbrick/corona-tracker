@@ -16,7 +16,7 @@ type JohnsHopkinsSpreadsheetSource struct {
 }
 
 func (j *JohnsHopkinsSpreadsheetSource) Collect() (err error) {
-	resp, err := http.Get("https://docs.google.com/spreadsheets/d/1yZv9w9zRKwrGTaR-YzmAqMefw4wMlaXocejdxZaTs6w/export?format=csv")
+	resp, err := http.Get(j.URL())
 	if err != nil {
 		return
 	}
@@ -31,5 +31,5 @@ func (j *JohnsHopkinsSpreadsheetSource) Records() []*Record {
 }
 
 func (j *JohnsHopkinsSpreadsheetSource) URL() string {
-	return "https://docs.google.com/spreadsheets/d/1yZv9w9zRKwrGTaR-YzmAqMefw4wMlaXocejdxZaTs6w/export?format=csv"
+	return "https://docs.google.com/spreadsheets/d/1wQVypefm946ch4XDp37uZ-wartW4V7ILdg-qYiDXUHM/export?format=csv"
 }

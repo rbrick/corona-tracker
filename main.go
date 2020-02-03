@@ -37,7 +37,7 @@ func poll() {
 			}
 		}
 
-		resp, err := http.Get("https://docs.google.com/spreadsheets/d/1yZv9w9zRKwrGTaR-YzmAqMefw4wMlaXocejdxZaTs6w/export?format=csv")
+		resp, err := http.Get("https://docs.google.com/spreadsheets/d/1wQVypefm946ch4XDp37uZ-wartW4V7ILdg-qYiDXUHM/export?format=csv")
 		if err != nil {
 			panic(err)
 		}
