@@ -147,8 +147,6 @@ func poll() {
 			}
 		}
 
-		fmt.Printf("❗*Coronavirus Updates*❗\n\n*Total Cases: %d \\(\\+%d\\)*\n*Total Deaths: %d \\(\\+%d\\)*\n*Total Recovered: %d \\(\\+%d\\)*\n*Last Updated: %s*",
-			totalCases, totalCasesDiff, totalDeaths, totalDeathDiff, totalRecover, totalRecoveredDiff, newRecords[0].LastUpdated.Format("Jan 2, 2006 @ 15:04"))
 		recentRecords = newRecords
 	}
 }
