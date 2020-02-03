@@ -100,19 +100,19 @@ func poll() {
 					diffReport += fmt.Sprintf(" Cases: %d ", record.ConfirmedCases)
 
 					if diff.DeltaCases != 0 {
-						diffReport += fmt.Sprintf("(+%d)", diff.DeltaCases)
+						diffReport += fmt.Sprintf("\\(\\+%d\\)", diff.DeltaCases)
 						totalCasesDiff += diff.DeltaCases
 					}
 					diffReport += ","
 					diffReport += fmt.Sprintf("Deaths: %d", record.Deaths)
 					if diff.DeltaDeaths != 0 {
-						diffReport += fmt.Sprintf("(+%d)", diff.DeltaDeaths)
+						diffReport += fmt.Sprintf("\\(\\+%d\\)", diff.DeltaDeaths)
 						totalDeathDiff += diff.DeltaDeaths
 					}
 
 					diffReport += ","
 					if diff.DeltaRecovered != 0 {
-						diffReport += fmt.Sprintf("(+%d)", diff.DeltaRecovered)
+						diffReport += fmt.Sprintf("\\(\\+%d\\)", diff.DeltaRecovered)
 						totalRecoveredDiff += diff.DeltaRecovered
 					}
 					diffReport += "\n\n"
@@ -142,6 +142,7 @@ func poll() {
 					totalCases, totalCasesDiff, totalDeaths, totalDeathDiff, totalRecover, totalRecoveredDiff, newRecords[0].LastUpdated.Format("Jan 2, 2006 @ 15:04")),
 				ParseMode: "markdownv2",
 			}
+
 			if _, err := bot.Send(msg); err != nil {
 				log.Panicln(err)
 			}
