@@ -3,18 +3,23 @@ package main
 import (
 	"fmt"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
+	"io/ioutil"
 	"log"
 	"os"
 	"os/signal"
+	"strconv"
+	"strings"
 	"sync"
 	"syscall"
 	"time"
+
+	"golang.org/x/text/number"
 )
 
 const (
-	formatDiffString   = "❗*Coronavirus Updates*❗\n\n*Total Cases: %d \\(\\+%d\\)*\n*Total Deaths: %d \\(\\+%d\\)*\n*Last Updated: %s*"
-	formatNoDiffString = "❗*Coronavirus Updates*❗\n\n*Total Cases: %d*\n*Total Deaths: %d*\n*Last Updated: %s*"
-	layout             = "Jan 2, 2006 @ 15:04"
+	formatDiffString   = "❗*Coronavirus Updates*❗\n\n*Total Cases: %s \\(\\+%d\\)*\n*Total Deaths: %s \\(\\+%d\\)*\n*Last Updated: %s*\n\n@CoronavirusStatNews"
+	formatNoDiffString = "❗*Coronavirus Updates*❗\n\n*Total Cases: %s*\n*Total Deaths: %s*\n*Last Updated: %s*"
+	layout             = "Jan 2, 2006 @ 15:04 MST"
 )
 
 var (
@@ -39,10 +44,10 @@ func poll() {
 				totalDeathsDiff := newRecord.Deaths - recentRecord.Deaths
 
 				if totalCasesDiff != 0 || totalDeathsDiff != 0 {
-					text = fmt.Sprintf(formatDiffString, newRecord.ConfirmedCases, totalCasesDiff, newRecord.Deaths, totalDeathsDiff, newRecord.LastUpdated.Format(layout))
+					text = fmt.Sprintf(formatDiffString, number.Decimal(newRecord.ConfirmedCases), totalCasesDiff, number.Decimal(newRecord.Deaths), totalDeathsDiff, newRecord.LastUpdated.Format(layout))
 				}
 			} else {
-				text = fmt.Sprintf(formatNoDiffString, newRecord.ConfirmedCases, newRecord.Deaths, newRecord.LastUpdated.Format(layout))
+				text = fmt.Sprintf(formatNoDiffString, number.Decimal(newRecord.ConfirmedCases), number.Decimal(newRecord.Deaths), newRecord.LastUpdated.Format(layout))
 			}
 
 			if text != "" {
@@ -75,6 +80,22 @@ func init() {
 	bot = _bot
 
 	source = &BNONewsDataSource{}
+
+	if f, err := os.Open("lastRecord"); err == nil {
+		b, _ := ioutil.ReadAll(f)
+		line := strings.Split(string(b), ",")
+		cases, _ := strconv.Atoi(line[0])
+		deaths, _ := strconv.Atoi(line[1])
+
+		recentRecord = &Record{
+			Province:       "",
+			Country:        "Global",
+			LastUpdated:    time.Now(),
+			ConfirmedCases: cases,
+			Deaths:         deaths,
+			Recovered:      -1,
+		}
+	}
 
 	log.Println("bot initialized successfully. initial polling...")
 	poll()
@@ -110,4 +131,6 @@ func main() {
 	log.Println("poll loop starting. polling every 15 minutes...")
 	wg.Add(1)
 	wg.Wait()
+
+	_ = ioutil.WriteFile("lastRecord", []byte(strconv.Itoa(recentRecord.ConfirmedCases)+","+strconv.Itoa(recentRecord.Deaths)), os.ModePerm)
 }
