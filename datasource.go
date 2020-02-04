@@ -4,7 +4,6 @@ import (
 	"errors"
 	"golang.org/x/net/html"
 	"golang.org/x/net/html/atom"
-	"io"
 	"net/http"
 	"regexp"
 	"strconv"
@@ -61,69 +60,50 @@ func (b *BNONewsDataSource) Collect() (err error) {
 	}
 
 	node, err := html.Parse(resp.Body)
-
 	if err != nil {
 		return
 	}
 
 	var records []*Record
 
-	walk(node, func(child *html.Node) error {
-		if child.Type == html.ErrorNode {
-			return io.EOF //
-		} else if child.Type == html.ElementNode {
-			if child.DataAtom == atom.P {
+	// node walker
+	var nw func(*html.Node)
+	nw = func(node *html.Node) {
+		if node.DataAtom == atom.P && node.Parent.Type == html.ElementNode && node.Parent.DataAtom == atom.Div {
+			for _, attr := range node.Parent.Attr {
+				if attr.Key == "id" && attr.Val == "mvp-content-main" {
+					// main content
+					if node.FirstChild.NextSibling != nil && node.FirstChild.NextSibling.DataAtom == atom.Strong {
+						info := node.FirstChild.NextSibling.FirstChild.Data
+						cases, _ := strconv.Atoi(strings.Replace(pattern.ReplaceAllString(info, "$1"), ",", "", -1))
+						deaths, _ := strconv.Atoi(pattern.ReplaceAllString(info, "$2"))
 
-				if child.Parent.Type == html.ElementNode && child.Parent.DataAtom == atom.Div {
+						records = append(records, &Record{
+							Province:       "",
+							Country:        "Global",
+							LastUpdated:    time.Now(),
+							ConfirmedCases: cases,
+							Deaths:         deaths,
+							Recovered:      -1,
+						})
 
-					mainContent := false
-					for _, attr := range child.Parent.Attr {
-
-						if attr.Key == "id" && attr.Val == "mvp-content-main" {
-							// main content
-							mainContent = true
-							break
-						}
+						return
 					}
-
-					if mainContent {
-						if child.FirstChild.NextSibling != nil && child.FirstChild.NextSibling.DataAtom == atom.Strong {
-							info := child.FirstChild.NextSibling.FirstChild.Data
-							cases, _ := strconv.Atoi(strings.Replace(pattern.ReplaceAllString(info, "$1"), ",", "", -1))
-							deaths, _ := strconv.Atoi(pattern.ReplaceAllString(info, "$2"))
-
-							records = append(records, &Record{
-								Province:       "",
-								Country:        "Global",
-								LastUpdated:    time.Now(),
-								ConfirmedCases: cases,
-								Deaths:         deaths,
-								Recovered:      -1,
-							})
-
-							return errCompletedParsing
-						}
-					}
+					break
 				}
 			}
 		}
 
-		return nil
-	})
+		for nxt := node.FirstChild; nxt != nil; nxt = nxt.NextSibling {
+			nw(nxt)
+		}
+	}
+
+	nw(node)
 
 	b.records = records
 	return nil
 
-}
-
-func walk(node *html.Node, walkFunc func(child *html.Node) error) {
-	for n := node.FirstChild; n != nil; n = n.NextSibling {
-		err := walkFunc(n)
-		if err != nil {
-			break
-		}
-		walk(n, walkFunc)
-	}
 }
 
 func (b *BNONewsDataSource) Records() []*Record {
