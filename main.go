@@ -45,16 +45,18 @@ func poll() {
 				text = fmt.Sprintf(formatNoDiffString, newRecord.ConfirmedCases, newRecord.Deaths, newRecord.LastUpdated.Format(layout))
 			}
 
-			msg := tgbotapi.MessageConfig{
-				BaseChat: tgbotapi.BaseChat{
-					ChannelUsername: fmt.Sprintf("@%s", channelName),
-				},
-				Text:      text,
-				ParseMode: "markdownv2",
-			}
+			if text != "" {
+				msg := tgbotapi.MessageConfig{
+					BaseChat: tgbotapi.BaseChat{
+						ChannelUsername: fmt.Sprintf("@%s", channelName),
+					},
+					Text:      text,
+					ParseMode: "markdownv2",
+				}
 
-			if _, err := bot.Send(msg); err != nil {
-				log.Panicln(err)
+				if _, err := bot.Send(msg); err != nil {
+					log.Panicln(err)
+				}
 			}
 		}
 
