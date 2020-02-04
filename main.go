@@ -62,13 +62,10 @@ func init() {
 
 	bot = _bot
 
+	source = &BNONewsDataSource{}
+
 	log.Println("bot initialized successfully. initial polling...")
 	poll()
-
-	bno := &BNONewsDataSource{}
-
-	_ = bno.Collect()
-
 	log.Println("poll successful!")
 }
 
