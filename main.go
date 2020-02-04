@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
+	"golang.org/x/text/language"
 	"io/ioutil"
 	"log"
 	"os"
@@ -13,6 +14,7 @@ import (
 	"syscall"
 	"time"
 
+	"golang.org/x/text/message"
 	"golang.org/x/text/number"
 )
 
@@ -27,7 +29,8 @@ var (
 	recentRecord *Record
 	bot          *tgbotapi.BotAPI
 
-	source *BNONewsDataSource
+	source  *BNONewsDataSource
+	printer = message.NewPrinter(language.English)
 )
 
 func poll() {
@@ -44,10 +47,10 @@ func poll() {
 				totalDeathsDiff := newRecord.Deaths - recentRecord.Deaths
 
 				if totalCasesDiff != 0 || totalDeathsDiff != 0 {
-					text = fmt.Sprintf(formatDiffString, number.Decimal(newRecord.ConfirmedCases), totalCasesDiff, number.Decimal(newRecord.Deaths), totalDeathsDiff, newRecord.LastUpdated.Format(layout))
+					text = printer.Sprintf(formatDiffString, number.Decimal(newRecord.ConfirmedCases), totalCasesDiff, number.Decimal(newRecord.Deaths), totalDeathsDiff, newRecord.LastUpdated.Format(layout))
 				}
 			} else {
-				text = fmt.Sprintf(formatNoDiffString, number.Decimal(newRecord.ConfirmedCases), number.Decimal(newRecord.Deaths), newRecord.LastUpdated.Format(layout))
+				text = printer.Sprintf(formatNoDiffString, number.Decimal(newRecord.ConfirmedCases), number.Decimal(newRecord.Deaths), newRecord.LastUpdated.Format(layout))
 			}
 
 			if text != "" {
