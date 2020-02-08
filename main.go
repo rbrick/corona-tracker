@@ -19,7 +19,7 @@ import (
 )
 
 const (
-	formatDiffString   = "❗*Coronavirus Updates*❗\n\n*Total Cases: %v \\(\\+%d\\)*\n*Total Deaths: %v \\(\\+%d\\)*\n*Last Updated: %s*\n\n@CoronavirusStatNews"
+	formatDiffString   = "❗*Coronavirus Updates*❗\n\n*Total Cases: %v (%s%d)*\n*Total Deaths: %v (%s%d)*\n*Last Updated: %s*\n\n@CoronavirusStatNews"
 	formatNoDiffString = "❗*Coronavirus Updates*❗\n\n*Total Cases: %v*\n*Total Deaths: %v*\n*Last Updated: %s*"
 	layout             = "Jan 2, 2006 @ 15:04 MST"
 )
@@ -41,13 +41,20 @@ func poll() {
 	} else {
 		newRecord := source.records[0]
 		if bot != nil {
+
 			text := ""
 			if recentRecord != nil {
 				totalCasesDiff := newRecord.ConfirmedCases - recentRecord.ConfirmedCases
 				totalDeathsDiff := newRecord.Deaths - recentRecord.Deaths
 
 				if totalCasesDiff != 0 || totalDeathsDiff != 0 {
-					text = printer.Sprintf(formatDiffString, number.Decimal(newRecord.ConfirmedCases), totalCasesDiff, number.Decimal(newRecord.Deaths), totalDeathsDiff, newRecord.LastUpdated.Format(layout))
+					sign := "+"
+
+					if totalCasesDiff < 0 {
+						sign = "-"
+					}
+
+					text = printer.Sprintf(formatDiffString, number.Decimal(newRecord.ConfirmedCases), sign, totalCasesDiff, number.Decimal(newRecord.Deaths), totalDeathsDiff, newRecord.LastUpdated.Format(layout))
 				}
 			} else {
 				text = printer.Sprintf(formatNoDiffString, number.Decimal(newRecord.ConfirmedCases), number.Decimal(newRecord.Deaths), newRecord.LastUpdated.Format(layout))
@@ -58,7 +65,7 @@ func poll() {
 					BaseChat: tgbotapi.BaseChat{
 						ChannelUsername: fmt.Sprintf("@%s", channelName),
 					},
-					Text:      text,
+					Text:      escape(text),
 					ParseMode: "markdownv2",
 				}
 
@@ -72,6 +79,20 @@ func poll() {
 	}
 
 }
+
+var escapes = "_*[]()~`>#+-=|{}.!"
+
+func escape(s string) string {
+	var newString []rune
+	for _, r := range s {
+		if strings.Index(escapes, string(r)) != -1 {
+			newString = append(newString, '\\')
+		}
+		newString = append(newString, r)
+	}
+	return string(newString)
+}
+
 func init() {
 	log.Println("initializing bot")
 	channelName = os.Getenv("TG_CHANNEL_NAME")
