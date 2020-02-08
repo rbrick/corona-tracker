@@ -80,7 +80,7 @@ func poll() {
 
 }
 
-var escapes = "_*[]()~`>#+-=|{}.!"
+var escapes = "_[]()~`>#+-=|{}.!"
 
 func escape(s string) string {
 	var newString []rune
