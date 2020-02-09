@@ -19,7 +19,7 @@ import (
 )
 
 const (
-	formatDiffString   = "❗*Coronavirus Updates*❗\n\n*Total Cases: %v (%s%d)*\n*Total Deaths: %v (%d)*\n*Last Updated: %s*\n\n@CoronavirusStatNews"
+	formatDiffString   = "❗*Coronavirus Updates*❗\n\n*Total Cases: %v (%s%d)*\n*Total Deaths: %v (+%d)*\n*Last Updated: %s*\n\n@CoronavirusStatNews"
 	formatNoDiffString = "❗*Coronavirus Updates*❗\n\n*Total Cases: %v*\n*Total Deaths: %v*\n*Last Updated: %s*"
 	layout             = "Jan 2, 2006 @ 15:04 MST"
 )
