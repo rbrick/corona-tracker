@@ -43,9 +43,11 @@ func poll() {
 		if bot != nil {
 
 			text := ""
+
+			totalCasesDiff, totalDeathsDiff := 0, 0
 			if recentRecord != nil {
-				totalCasesDiff := newRecord.ConfirmedCases - recentRecord.ConfirmedCases
-				totalDeathsDiff := newRecord.Deaths - recentRecord.Deaths
+				totalCasesDiff = newRecord.ConfirmedCases - recentRecord.ConfirmedCases
+				totalDeathsDiff = newRecord.Deaths - recentRecord.Deaths
 
 				if totalCasesDiff != 0 || totalDeathsDiff != 0 {
 					sign := "+"
@@ -63,7 +65,8 @@ func poll() {
 			if text != "" {
 				msg := tgbotapi.MessageConfig{
 					BaseChat: tgbotapi.BaseChat{
-						ChannelUsername: fmt.Sprintf("@%s", channelName),
+						ChannelUsername:     fmt.Sprintf("@%s", channelName),
+						DisableNotification: !(totalCasesDiff >= 200 || totalDeathsDiff >= 200),
 					},
 					Text:      escape(text),
 					ParseMode: "markdownv2",
